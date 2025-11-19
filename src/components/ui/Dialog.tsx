@@ -1,6 +1,5 @@
 import { type PropsWithChildren, type ReactNode, useState, createContext, useContext, Children } from 'react'
 import { IconX } from '@tabler/icons-react'
-import { cn } from '@/lib/utils'
 import Button from './button'
 
 const DialogContext = createContext<{
@@ -97,11 +96,9 @@ function Dialog(props: DialogPropsType) {
           >
             <IconX className='w-4 h-4'/>
           </Button>
-          {/* <DialogContext.Provider value={{ open: openDialog, close: closeDialog }}> */}
             <div className='relative flex flex-col w-full h-full'>
               { props.children }
             </div>
-          {/* </DialogContext.Provider> */}
         </div>
       </div>
   }
@@ -113,4 +110,11 @@ function Dialog(props: DialogPropsType) {
   )
 }
 
-export { Dialog, DialogHeader, DialogFooter, DialogDescription, DialogTrigger, DialogClose }
+export {
+  Dialog,
+  DialogHeader,
+  DialogFooter,
+  DialogDescription,
+  DialogTrigger,
+  DialogClose,
+}

@@ -12,8 +12,6 @@ import {
 } from './ui/Dialog'
 
 function PasswordGenerator() {
-  const triggerContent = <><IconSparkles /> Generate</>
-
   const specialCharacters = '$?!@#%^&*()-_+={}[]|\,.;\"\'<>/\\~'
   const digits = '01234567890'
   const uppercaseCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -25,14 +23,21 @@ function PasswordGenerator() {
   const [withDigits, setWithDigiits] = useState(true)
   const [withUppercaseCharacters, setWithUppercaseCharacters] = useState(true)
   const [withLowercaseCharacters, setWithLowercaseCharacters] = useState(true)
+  const [withCustomCharacterSet, setWithCustomCharacterSet] = useState(false)
+  const [customCharacterSet, setCustomCharacterSet] = useState('')
 
   const generatePassword = async () => {
     let characterSet = ''
 
-    if (withSpecialCharacters) characterSet += specialCharacters
-    if (withDigits) characterSet += digits
-    if (withUppercaseCharacters) characterSet += uppercaseCharacters
-    if (withLowercaseCharacters) characterSet += lowerCharacters
+    if (withCustomCharacterSet) {
+      characterSet = customCharacterSet
+    }
+    else {
+      if (withSpecialCharacters) characterSet += specialCharacters
+      if (withDigits) characterSet += digits
+      if (withUppercaseCharacters) characterSet += uppercaseCharacters
+      if (withLowercaseCharacters) characterSet += lowerCharacters
+    }
 
     let result = ''
     for (let i = 0; i < passwordLength; i++) {
@@ -50,10 +55,6 @@ function PasswordGenerator() {
     }
   }
 
-  useEffect(() => {
-    generatePassword()
-  }, [])
-
   const triggerComponent =
     <DialogTrigger>
       <Button variant="default">
@@ -62,7 +63,7 @@ function PasswordGenerator() {
     </DialogTrigger>
 
   return (
-    <Dialog trigger={triggerComponent}>
+    <Dialog trigger={triggerComponent} onOpen={generatePassword}>
       <DialogHeader>Generate password</DialogHeader>
       {/* <DialogDescription>Customise your password below. Click Generate when you're ready</DialogDescription> */}
       
@@ -98,58 +99,90 @@ function PasswordGenerator() {
           onChange={(e) => setPasswordLength(+e.target.value)}
         />
       </div>
+
+      {
+        withCustomCharacterSet
+          ? null
+          : <>
+              <div className="flex flex-row gap-2 mt-2">
+                <input
+                  type="checkbox"
+                  id="special-characters"
+                  className="accent-black"
+                  checked={withSpecialCharacters}
+                  onChange={(e) => setWithSpecialCharacters(!withSpecialCharacters)}
+                />
+                <label htmlFor="special-characters" className="font-semibold text-sm">
+                  Use special characters
+                </label>
+              </div>
+              <span className="text-[#a1a1a1] text-sm ml-[calc(1.25rem+2px)]">
+                { specialCharacters }
+              </span>
+              <div className="flex flex-row gap-2 mt-2">
+                <input
+                  type="checkbox"
+                  id="digits"
+                  className="accent-black"
+                  checked={withDigits}
+                  onChange={(e) => setWithDigiits(!withDigits)}
+                />
+                <label htmlFor="digits" className="font-semibold text-sm">
+                  Use digits
+                </label>
+              </div>
+              <div className="flex flex-row gap-2 mt-2">
+                <input
+                  type="checkbox"
+                  id="uppercase"
+                  className="accent-black"
+                  checked={withUppercaseCharacters}
+                  onChange={(e) => setWithUppercaseCharacters(!withUppercaseCharacters)}
+                />
+                <label htmlFor="uppercase" className="font-semibold text-sm">
+                  Use uppercase characters
+                </label>
+              </div>
+              <div className="flex flex-row gap-2 mt-2">
+                <input
+                  type="checkbox"
+                  id="lowercase"
+                  className="accent-black"
+                  checked={withLowercaseCharacters}
+                  onChange={(e) => setWithLowercaseCharacters(!withLowercaseCharacters)}
+                />
+                <label htmlFor="lowercase" className="font-semibold text-sm">
+                  Use lowercase characters
+                </label>
+              </div>
+            </>
+      }
+
       <div className="flex flex-row gap-2 mt-2">
         <input
           type="checkbox"
-          id="special-characters"
+          id="custom"
           className="accent-black"
-          checked={withSpecialCharacters}
-          onChange={(e) => setWithSpecialCharacters(!withSpecialCharacters)}
+          checked={withCustomCharacterSet}
+          onChange={(e) => setWithCustomCharacterSet(!withCustomCharacterSet)}
         />
-        <label htmlFor="special-characters" className="font-semibold text-sm">
-          Use special characters
-        </label>
-      </div>
-      <span className="text-[#a1a1a1] text-sm ml-[calc(1.25rem+2px)]">
-        { specialCharacters }
-      </span>
-      <div className="flex flex-row gap-2 mt-2">
-        <input
-          type="checkbox"
-          id="digits"
-          className="accent-black"
-          checked={withDigits}
-          onChange={(e) => setWithDigiits(!withDigits)}
-        />
-        <label htmlFor="digits" className="font-semibold text-sm">
-          Use digits
-        </label>
-      </div>
-      <div className="flex flex-row gap-2 mt-2">
-        <input
-          type="checkbox"
-          id="uppercase"
-          className="accent-black"
-          checked={withUppercaseCharacters}
-          onChange={(e) => setWithUppercaseCharacters(!withUppercaseCharacters)}
-        />
-        <label htmlFor="uppercase" className="font-semibold text-sm">
-          Use uppercase characters
-        </label>
-      </div>
-      <div className="flex flex-row gap-2 mt-2">
-        <input
-          type="checkbox"
-          id="lowercase"
-          className="accent-black"
-          checked={withLowercaseCharacters}
-          onChange={(e) => setWithLowercaseCharacters(!withLowercaseCharacters)}
-        />
-        <label htmlFor="lowercase" className="font-semibold text-sm">
-          Use lowercase characters
+        <label htmlFor="custom" className="font-semibold text-sm">
+          Use custom character set
         </label>
       </div>
 
+      {
+        withCustomCharacterSet
+          ? <input
+              type="text"
+              placeholder="Enter characters.."
+              value={customCharacterSet}
+              className='outline-none mt-2 border border-[#e9e4e5] px-2 rounded-md h-8'
+              onChange={(e) => setCustomCharacterSet(e.target.value)}
+            />
+          : null
+      }
+      
       <p className="justify-center my-auto mx-auto text-4xl selection:bg-black/20">
         { password }
       </p>
