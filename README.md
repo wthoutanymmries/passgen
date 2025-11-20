@@ -1,4 +1,6 @@
-# bun-react-tailwind-shadcn-template
+# Passgen: A simple password generator and credentials manager
+
+![](./screenshot.png)
 
 To install dependencies:
 
@@ -17,5 +19,3 @@ To run for production:
 ```bash
 bun start
 ```
-
-This project was created using `bun init` in bun v1.3.2. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
