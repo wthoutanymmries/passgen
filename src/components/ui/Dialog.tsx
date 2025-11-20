@@ -1,6 +1,15 @@
-import { type PropsWithChildren, type ReactNode, useState, createContext, useContext, Children } from 'react'
+import {
+  type PropsWithChildren,
+  type ReactNode,
+  useState,
+  createContext,
+  useContext,
+  useImperativeHandle,
+  forwardRef,
+} from 'react'
 import { IconX } from '@tabler/icons-react'
-import Button from './button'
+import Button from './Button'
+import { cn } from '@/lib/utils';
 
 const DialogContext = createContext<{
   open: () => void;
@@ -53,11 +62,17 @@ function DialogDescription(props: PropsWithChildren) {
 
 type DialogPropsType = PropsWithChildren<{
   trigger: ReactNode,
+  className?: string,
   onOpen?: () => void,
   onClose?: () => void,
 }>
 
-function Dialog(props: DialogPropsType) {
+type DialogHandle = {
+  open: () => void,
+  close: () => void,
+}
+
+const Dialog = forwardRef<DialogHandle, DialogPropsType>((props, ref) => {
   if (!props.children) {
     return
   }
@@ -74,6 +89,11 @@ function Dialog(props: DialogPropsType) {
     setIsDialogOpen(false)
   }
 
+  useImperativeHandle(ref, () => ({
+    open: openDialog,
+    close: closeDialog,
+  }))
+
   let component
   
   if (!isDialogOpen) {
@@ -81,26 +101,32 @@ function Dialog(props: DialogPropsType) {
   }
   else {
     component = 
-      <div
-        className='top-0 left-0 bg-black/40 fixed w-full h-full cursor-pointer z-1000 duration-200'
-        onClick={closeDialog}
-      >
+      <>
+        { props.trigger }
         <div
-          className='absolute w-[425px] h-[495px] top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] rounded-lg border p-6 shadow-lg bg-white cursor-default'
-          onClick={(e) => e.stopPropagation()}
+          className='top-0 left-0 bg-black/40 fixed w-full h-full cursor-pointer z-1000 duration-200'
+          onClick={closeDialog}
         >
-          <Button
-            variant='default'
-            className='bg-transparent p-0 has-[>svg]:px-0 absolute top-4 right-4 cursor-pointer w-6 h-6 flex justify-center items-center'
-            onClick={closeDialog}
+          <div
+            className={cn(
+              'absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] rounded-lg border p-6 shadow-lg bg-white cursor-default',
+              props.className
+            )}
+            onClick={(e) => e.stopPropagation()}
           >
-            <IconX className='w-4 h-4'/>
-          </Button>
-            <div className='relative flex flex-col w-full h-full'>
-              { props.children }
-            </div>
+            <Button
+              variant='default'
+              className='bg-transparent p-0 has-[>svg]:px-0 absolute top-4 right-4 cursor-pointer w-6 h-6 flex justify-center items-center'
+              onClick={closeDialog}
+            >
+              <IconX className='w-4 h-4'/>
+            </Button>
+              <div className='relative flex flex-col w-full h-full'>
+                { props.children }
+              </div>
+          </div>
         </div>
-      </div>
+      </>
   }
   
   return (
@@ -108,7 +134,7 @@ function Dialog(props: DialogPropsType) {
       { component }
     </DialogContext.Provider>
   )
-}
+})
 
 export {
   Dialog,
@@ -117,4 +143,5 @@ export {
   DialogDescription,
   DialogTrigger,
   DialogClose,
+  type DialogHandle
 }

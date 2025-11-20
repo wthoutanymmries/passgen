@@ -5,6 +5,7 @@ type ButtonVariant = "default" | "primary" | "secondary" | "outline"
 type PropsType = PropsWithChildren<{
   variant: ButtonVariant
   className?: string,
+  submit?: boolean,
   onClick?: () => void,
 }>
 
@@ -19,7 +20,11 @@ function Button(props: PropsType) {
   const classList = variants[props.variant]
 
   return (
-    <button className={cn(defaultClassList, classList, props.className)} onClick={props.onClick}>
+    <button
+      className={cn(defaultClassList, classList, props.className)}
+      onClick={props.onClick}
+      type={props.submit ? 'submit' : 'button'}
+    >
       { props.children }
     </button>
   )

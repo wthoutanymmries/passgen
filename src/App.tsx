@@ -1,14 +1,14 @@
 import "./index.css"
 import Aurora from "./components/ui/aurora"
-import Button from "./components/ui/button"
 import PasswordGenerator from "./components/PasswordGenerator"
+import PasswordManager from "./components/PasswordManager"
 
 export function App() {
   return (
     <div className="w-full h-full bg-black relative">
       <div className="w-full h-full absolute z-0">
         <Aurora
-          // colorStops={["#3A29FF", "#FF94B4", "#FF3232"]}
+          // colorStops={["#3A29FF", "#FF94B4",s "#FF3232"]}
           // colorStops={["#fb8b24", "#d90368", "#820263"]}
           colorStops={["#092327", "#0b5351", "#00a9a5"]}
           blend={0.5}
@@ -30,7 +30,7 @@ export function App() {
 
           <div className="flex flex-row mt-4 gap-2">
             <PasswordGenerator />
-            <Button variant="secondary">View saved</Button>
+            <PasswordManager />
           </div>
         </div>
       </div>

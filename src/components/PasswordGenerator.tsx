@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { IconSparkles, IconBulb } from '@tabler/icons-react'
 
-import Button from './ui/button'
+import Button from './ui/Button'
 import {
   Dialog,
   DialogHeader,
@@ -63,7 +63,11 @@ function PasswordGenerator() {
     </DialogTrigger>
 
   return (
-    <Dialog trigger={triggerComponent} onOpen={generatePassword}>
+    <Dialog
+      trigger={triggerComponent}
+      onOpen={generatePassword}
+      className='w-[425px] h-[495px]'
+    >
       <DialogHeader>Generate password</DialogHeader>
       {/* <DialogDescription>Customise your password below. Click Generate when you're ready</DialogDescription> */}
       
@@ -190,7 +194,7 @@ function PasswordGenerator() {
       <DialogFooter>
         <DialogClose>
           <Button variant="outline">
-            <IconSparkles /> Cancel
+            Cancel
           </Button>
         </DialogClose>
         <Button variant="primary" onClick={generatePassword}>
