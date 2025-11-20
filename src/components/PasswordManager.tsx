@@ -60,10 +60,20 @@ function PasswordManager() {
   }
 
   const removeCredential = async (service: string) => {
-    // localStorage.removeItem(service)
-    const response = await simulateServerResponse(
-      () => localStorage.removeItem(service)
-    )
+    const response = await simulateServerResponse(() => {
+      localStorage.removeItem(service)
+
+      const serviceListStorageItem = localStorage.getItem('__serviceList')
+      if (!serviceListStorageItem) return
+
+      const serviceList = JSON.parse(serviceListStorageItem) as string[]
+      if (!serviceList) return
+
+      localStorage.setItem(
+        '__serviceList',
+        JSON.stringify(serviceList.filter((value) => value !== service))
+      )
+    })
 
     if (response.status !== 200) {
       messageDialogRef.current?.open()
