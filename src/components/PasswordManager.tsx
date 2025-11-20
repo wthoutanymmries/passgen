@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { IconX, IconCopy } from '@tabler/icons-react'
 import Button from './ui/Button'
 import {
@@ -8,8 +8,10 @@ import {
   DialogDescription,
   DialogTrigger,
   DialogClose,
+  type DialogHandle
 } from './ui/Dialog'
 import AddCredential from './AddCredential'
+import { simulateServerResponse } from '@/lib/utils'
 
 type Credentials = {
   service: string,
@@ -20,6 +22,7 @@ type Credentials = {
 function PasswordManager() {
   const header = ['Service', 'Login', 'Password', 'Actions']
   const [data, setData] = useState<Credentials[] | undefined>(undefined)
+  const messageDialogRef = useRef<DialogHandle>(null)
 
   const triggerComponent =
     <DialogTrigger>
@@ -56,8 +59,16 @@ function PasswordManager() {
     setData(credentials)
   }
 
-  const removeCredential = (service: string) => {
-    localStorage.removeItem(service)
+  const removeCredential = async (service: string) => {
+    // localStorage.removeItem(service)
+    const response = await simulateServerResponse(
+      () => localStorage.removeItem(service)
+    )
+
+    if (response.status !== 200) {
+      messageDialogRef.current?.open()
+      return
+    }
 
     if (!data) {
       return
@@ -108,88 +119,100 @@ function PasswordManager() {
   }
   
   return (
-    <Dialog trigger={triggerComponent} onOpen={onOpen} className='w-2/3 h-3/4'>
-      <DialogHeader>Manage passwords</DialogHeader>
-      <DialogDescription>
-        Your vault is 100% local and private. Add entries or generate secure passwords below.
-      </DialogDescription>
+    <>
+      <Dialog trigger={triggerComponent} onOpen={onOpen} className='w-2/3 h-3/4'>
+        <DialogHeader>Manage passwords</DialogHeader>
+        <DialogDescription>
+          Your vault is 100% local and private. Add entries or generate secure passwords below.
+        </DialogDescription>
 
-      <table className='mt-4 text-left text-sm table-fixed'>
-        <thead className='sticky top-0'>
-          <tr>
-            {
-              header.map((content, index) => {
-                return (
-                  <th scope="col" key={index} className='border-b pt-0 pb-3 pl-4 w-1/4'>
-                    { content }
-                  </th>
-                )
-              })
-            }
-          </tr>
-        </thead>
-      </table>
-
-      <div className="flex-1 overflow-y-auto mb-6">
-        <table className='w-full text-left text-sm table-fixed'>  
-          <tbody className='overflow-y-auto'>
-            {
-              data && data.map((credentials, index) => {
-                return (
-                  <tr key={index}>
-                    <th scope="row" className='p-4 border-b border-b-black/30 w-1/4'>
-                      { credentials.service }
+        <table className='mt-4 text-left text-sm table-fixed'>
+          <thead className='sticky top-0'>
+            <tr>
+              {
+                header.map((content, index) => {
+                  return (
+                    <th scope="col" key={index} className='border-b pt-0 pb-3 pl-4 w-1/4'>
+                      { content }
                     </th>
-                    <td className='p-4 border-b border-b-black/30 w-1/4'>
-                      { credentials.login }
-                    </td>
-                    <td className='p-4 border-b border-b-black/30 w-1/4'>
-                      { '*'.repeat(9) }
-                    </td>
-                    <td className='p-4 border-b border-b-black/30 text-right w-1/4'>
-                      <Button
-                        variant='outline'
-                        className='w-10 h-8'
-                        onClick={() => copyToClipbard(credentials.password)}
-                      >
-                        <IconCopy />
-                      </Button>
-                      <Button
-                        variant='primary'
-                        className='w-10 h-8 ml-3'
-                        onClick={() => removeCredential(credentials.service)}
-                      >
-                        <IconX />
-                      </Button>
-                    </td>
-                  </tr>
-                )
-              })
-            }
-          </tbody>
+                  )
+                })
+              }
+            </tr>
+          </thead>
         </table>
-      </div>
 
-      <DialogFooter>
-        <input
-          type="text"
-          id="service-search"
-          placeholder="Search services"
-          className='outline-none border border-[#e9e4e5] px-2 rounded-md h-9 text-sm'
-          onChange={(e) => filterServices(e.target.value)}
-        />
+        <div className="flex-1 overflow-y-auto mb-6">
+          <table className='w-full text-left text-sm table-fixed'>  
+            <tbody className='overflow-y-auto'>
+              {
+                data && data.map((credentials, index) => {
+                  return (
+                    <tr key={index}>
+                      <th scope="row" className='p-4 border-b border-b-black/30 w-1/4'>
+                        { credentials.service }
+                      </th>
+                      <td className='p-4 border-b border-b-black/30 w-1/4'>
+                        { credentials.login }
+                      </td>
+                      <td className='p-4 border-b border-b-black/30 w-1/4'>
+                        { '*'.repeat(9) }
+                      </td>
+                      <td className='p-4 border-b border-b-black/30 text-right w-1/4'>
+                        <Button
+                          variant='outline'
+                          className='w-10 h-8'
+                          onClick={() => copyToClipbard(credentials.password)}
+                        >
+                          <IconCopy />
+                        </Button>
+                        <Button
+                          variant='primary'
+                          className='w-10 h-8 ml-3'
+                          onClick={() => removeCredential(credentials.service)}
+                        >
+                          <IconX />
+                        </Button>
+                      </td>
+                    </tr>
+                  )
+                })
+              }
+            </tbody>
+          </table>
+        </div>
 
-        <DialogClose>
-          <Button variant="outline">
-            Close
-          </Button>
-        </DialogClose>
-        {/* <Button variant="primary">
-          Add
-        </Button> */}
-        <AddCredential onAddCredential={onOpen} />
-      </DialogFooter>
-    </Dialog>
+        <DialogFooter>
+          <input
+            type="text"
+            id="service-search"
+            placeholder="Search services"
+            className='outline-none border border-[#e9e4e5] px-2 rounded-md h-9 text-sm'
+            onChange={(e) => filterServices(e.target.value)}
+          />
+
+          <DialogClose>
+            <Button variant="outline">
+              Close
+            </Button>
+          </DialogClose>
+          {/* <Button variant="primary">
+            Add
+          </Button> */}
+          <AddCredential onAddCredential={onOpen} />
+        </DialogFooter>
+      </Dialog>
+
+      <Dialog ref={messageDialogRef} className='w-xl'>
+        <DialogHeader>An error occured during request</DialogHeader>
+        <DialogDescription>Please try again.</DialogDescription>
+        <DialogFooter>
+          <DialogClose>
+            <Button variant='primary'>Close</Button>
+          </DialogClose>
+        </DialogFooter>
+      </Dialog>
+    </>
   )
 }
 

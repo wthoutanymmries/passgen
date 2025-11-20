@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { IconSparkles } from '@tabler/icons-react'
 import z from 'zod'
 import { useForm } from 'react-hook-form'
@@ -13,7 +13,7 @@ import {
   type DialogHandle,
 } from './ui/Dialog'
 import Button from './ui/Button'
-import { generate } from '@/lib/utils'
+import { generate, simulateServerResponse } from '@/lib/utils'
 
 const credentialSchema = z.object({
   service: z
@@ -37,6 +37,8 @@ type PropsType = {
 
 function AddCredential(props: PropsType) {
   const dialogRef = useRef<DialogHandle>(null)
+  const messageDialogRef = useRef<DialogHandle>(null)
+  const [errorMessage, setErrorMessage] = useState('')
 
   const triggerComponent =
     <DialogTrigger>
@@ -75,21 +77,42 @@ function AddCredential(props: PropsType) {
       }
     }
   }
+
+  const addCredential = (key: string, credential: string) => {
+    localStorage.setItem(key, credential)
+  }
   
-  const onSubmit = (data: CredentialFormValues) => {
+  const onSubmit = async (data: CredentialFormValues) => {
     const credentials = localStorage.getItem(data.service)
 
     if (credentials) {
-      alert('credentials for this service already exist')
+      setErrorMessage('Credentials for this service already exist.')
+      messageDialogRef.current?.open()
+      return
     }
 
-    localStorage.setItem(
-      `${data.service}`,
-      JSON.stringify({
-        login: data.login,
-        password: data.password,
-      })
+    // localStorage.setItem(
+    //   `${data.service}`,
+    //   JSON.stringify({
+    //     login: data.login,
+    //     password: data.password,
+    //   })
+    // )
+    const response = await simulateServerResponse(
+      () => addCredential(
+        `${data.service}`,
+        JSON.stringify({
+            login: data.login,
+            password: data.password,
+        })
+      )
     )
+
+    if (response.status !== 200) {
+      setErrorMessage('Please try again.')
+      messageDialogRef.current?.open()
+      return
+    }
 
     props.onAddCredential()
 
@@ -109,83 +132,95 @@ function AddCredential(props: PropsType) {
   }
 
   return (
-    <Dialog
-      ref={dialogRef}
-      trigger={triggerComponent}
-      onOpen={onOpen}
-      className='w-[425px] h-[495px]'
-    >
-      <DialogHeader>Add service</DialogHeader>
-      <DialogDescription>
-        Add your login details here.
-      </DialogDescription>
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          handleSubmit(onSubmit)()
-        }}
-        className='flex flex-col h-full'
+    <>
+      <Dialog
+        ref={dialogRef}
+        trigger={triggerComponent}
+        onOpen={onOpen}
+        className='w-[425px] h-[495px]'
       >
-        <label htmlFor='service-field' className="font-semibold text-sm">Service:</label>
-        <input
-          type="text"
-          id="service-field"
-          placeholder="Enter service name"
-          className='outline-none mt-2 border border-[#e9e4e5] px-2 rounded-md h-9 text-sm'
-          {...register('service')}
-        />
-        {
-          errors.service && (
-            <p className='text-sm text-red-500'>{errors.service.message}</p>
-          )
-        }
-        
-        <label htmlFor='login-field' className="font-semibold text-sm mt-2">Login:</label>
-        <input
-          type="text"
-          id="login-field"
-          placeholder="Enter username"
-          className='outline-none mt-2 border border-[#e9e4e5] px-2 rounded-md h-9 text-sm'
-          {...register('login')}
-        />
-        {
-          errors.login && (
-            <p className='text-sm text-red-500'>{errors.login.message}</p>
-          )
-        }
-        
-        <label htmlFor='password-field' className="mt-2 font-semibold text-sm">Password:</label>
-        <div className='flex flex-row gap-2 mt-2'>
+        <DialogHeader>Add service</DialogHeader>
+        <DialogDescription>
+          Add your login details here.
+        </DialogDescription>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            handleSubmit(onSubmit)()
+          }}
+          className='flex flex-col h-full'
+        >
+          <label htmlFor='service-field' className="font-semibold text-sm">Service:</label>
           <input
             type="text"
-            id="password-field"
-            placeholder="Enter password"
-            className='grow outline-none border border-[#e9e4e5] px-2 rounded-md h-9 text-sm'
-            {...register('password')}
+            id="service-field"
+            placeholder="Enter service name"
+            className='outline-none mt-2 border border-[#e9e4e5] px-2 rounded-md h-9 text-sm'
+            {...register('service')}
           />
-          <Button variant='primary' onClick={generatePassword}>
-            <IconSparkles />
-          </Button>
-        </div>
-        {
-          errors.password && (
-            <p className='text-sm text-red-500'>{errors.password.message}</p>
-          )
-        }
-      
+          {
+            errors.service && (
+              <p className='text-sm text-red-500'>{errors.service.message}</p>
+            )
+          }
+          
+          <label htmlFor='login-field' className="font-semibold text-sm mt-2">Login:</label>
+          <input
+            type="text"
+            id="login-field"
+            placeholder="Enter username"
+            className='outline-none mt-2 border border-[#e9e4e5] px-2 rounded-md h-9 text-sm'
+            {...register('login')}
+          />
+          {
+            errors.login && (
+              <p className='text-sm text-red-500'>{errors.login.message}</p>
+            )
+          }
+          
+          <label htmlFor='password-field' className="mt-2 font-semibold text-sm">Password:</label>
+          <div className='flex flex-row gap-2 mt-2'>
+            <input
+              type="text"
+              id="password-field"
+              placeholder="Enter password"
+              className='grow outline-none border border-[#e9e4e5] px-2 rounded-md h-9 text-sm'
+              {...register('password')}
+            />
+            <Button variant='primary' onClick={generatePassword}>
+              <IconSparkles />
+            </Button>
+          </div>
+          {
+            errors.password && (
+              <p className='text-sm text-red-500'>{errors.password.message}</p>
+            )
+          }
+        
+          <DialogFooter>
+            <DialogClose>
+              <Button variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button variant="primary" submit>
+              Save
+            </Button>
+          </DialogFooter>
+        </form>
+      </Dialog>
+
+      <Dialog ref={messageDialogRef} className='w-xl'>
+        <DialogHeader>An error occured during request</DialogHeader>
+        <DialogDescription>{errorMessage}</DialogDescription>
         <DialogFooter>
           <DialogClose>
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
+            <Button variant='primary'>Close</Button>
           </DialogClose>
-          <Button variant="primary" submit>
-            Save
-          </Button>
         </DialogFooter>
-      </form>
-    </Dialog>
+      </Dialog>
+    </>
   )
 }
 

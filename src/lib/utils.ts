@@ -19,3 +19,19 @@ export function generate(length: number, characterSet?: string) {
 
   return result
 }
+
+export async function simulateServerResponse<T>(
+  payload: () => T,
+  delay: number = 200
+): Promise<{ status: number, data?: T, error?: string }> {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (Math.random() < 0.65) {
+        resolve({ status: 200, data: payload() })
+      }
+      else {
+        resolve({ status: 500, error: 'Internal server error.' })
+      }
+    }, delay)
+  })
+}

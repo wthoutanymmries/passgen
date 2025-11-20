@@ -61,7 +61,7 @@ function DialogDescription(props: PropsWithChildren) {
 }
 
 type DialogPropsType = PropsWithChildren<{
-  trigger: ReactNode,
+  trigger?: ReactNode,
   className?: string,
   onOpen?: () => void,
   onClose?: () => void,

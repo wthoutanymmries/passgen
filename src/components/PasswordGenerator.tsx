@@ -1,17 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { IconSparkles, IconBulb } from '@tabler/icons-react'
-
 import Button from './ui/Button'
 import {
   Dialog,
   DialogHeader,
   DialogFooter,
-  // DialogDescription,
+  DialogDescription,
   DialogTrigger,
   DialogClose,
+  type DialogHandle
 } from './ui/Dialog'
+import { simulateServerResponse, generate } from '@/lib/utils'
 
 function PasswordGenerator() {
+  const messageDialogRef = useRef<DialogHandle>(null)
+
   const specialCharacters = '$?!@#%^&*()-_+={}[]|\,.;\"\'<>/\\~'
   const digits = '01234567890'
   const uppercaseCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -39,16 +42,19 @@ function PasswordGenerator() {
       if (withLowercaseCharacters) characterSet += lowerCharacters
     }
 
-    let result = ''
-    for (let i = 0; i < passwordLength; i++) {
-      const randomIndex = Math.floor(Math.random() * characterSet.length)
-      result += characterSet[randomIndex]
+    const response = await simulateServerResponse(
+      () => generate(passwordLength, characterSet)
+    )
+
+    if (response.status === 50 || !response.data) {
+      messageDialogRef.current?.open()
+      return
     }
 
-    setPassword(result)
+    setPassword(response.data)
 
     try {
-      await navigator.clipboard.writeText(result)
+      await navigator.clipboard.writeText(response.data)
     }
     catch (error) {
       console.log(error)
@@ -63,145 +69,157 @@ function PasswordGenerator() {
     </DialogTrigger>
 
   return (
-    <Dialog
-      trigger={triggerComponent}
-      onOpen={generatePassword}
-      className='w-[425px] h-[495px]'
-    >
-      <DialogHeader>Generate password</DialogHeader>
-      {/* <DialogDescription>Customise your password below. Click Generate when you're ready</DialogDescription> */}
-      
-      <div className="w-full min-h-4 rounded-lg border border-[#e9e4e5] px-4 py-3 text-sm flex flex-col">
-        <div className="flex flex-row items-center gap-4">
-          <IconBulb />
-          <span className="text-black text-md leading-none font-semibold">
-            Pro tip!
-          </span>
+    <>
+      <Dialog
+        trigger={triggerComponent}
+        onOpen={generatePassword}
+        className='w-[425px] h-[495px]'
+      >
+        <DialogHeader>Generate password</DialogHeader>
+        {/* <DialogDescription>Customise your password below. Click Generate when you're ready</DialogDescription> */}
+        
+        <div className="w-full min-h-4 rounded-lg border border-[#e9e4e5] px-4 py-3 text-sm flex flex-col">
+          <div className="flex flex-row items-center gap-4">
+            <IconBulb />
+            <span className="text-black text-md leading-none font-semibold">
+              Pro tip!
+            </span>
+          </div>
+          <div className="flex flex-row gap-4">
+            <div className="min-w-6 h-6"></div>
+            <span className="text-[#a1a1a1] text-sm">
+              Click Generate multiple times to find your perfect password.
+            </span>
+          </div>
         </div>
-        <div className="flex flex-row gap-4">
-          <div className="min-w-6 h-6"></div>
-          <span className="text-[#a1a1a1] text-sm">
-            Click Generate multiple times to find your perfect password.
-          </span>
+
+        <div className="flex flex-row gap-2 mt-2 items-center">
+          <label
+            htmlFor="password-length"
+            className="font-semibold text-sm"
+          >
+            Password length:
+          </label>
+          <input
+            type="number"
+            id="password-length"
+            min="1"
+            max="15"
+            value={passwordLength}
+            className='outline-none'
+            onChange={(e) => setPasswordLength(+e.target.value)}
+          />
         </div>
-      </div>
 
-      <div className="flex flex-row gap-2 mt-2 items-center">
-        <label
-          htmlFor="password-length"
-          className="font-semibold text-sm"
-        >
-          Password length:
-        </label>
-        <input
-          type="number"
-          id="password-length"
-          min="1"
-          max="15"
-          value={passwordLength}
-          className='outline-none'
-          onChange={(e) => setPasswordLength(+e.target.value)}
-        />
-      </div>
+        {
+          withCustomCharacterSet
+            ? null
+            : <>
+                <div className="flex flex-row gap-2 mt-2">
+                  <input
+                    type="checkbox"
+                    id="special-characters"
+                    className="accent-black"
+                    checked={withSpecialCharacters}
+                    onChange={(e) => setWithSpecialCharacters(!withSpecialCharacters)}
+                  />
+                  <label htmlFor="special-characters" className="font-semibold text-sm">
+                    Use special characters
+                  </label>
+                </div>
+                <span className="text-[#a1a1a1] text-sm ml-[calc(1.25rem+2px)]">
+                  { specialCharacters }
+                </span>
+                <div className="flex flex-row gap-2 mt-2">
+                  <input
+                    type="checkbox"
+                    id="digits"
+                    className="accent-black"
+                    checked={withDigits}
+                    onChange={(e) => setWithDigiits(!withDigits)}
+                  />
+                  <label htmlFor="digits" className="font-semibold text-sm">
+                    Use digits
+                  </label>
+                </div>
+                <div className="flex flex-row gap-2 mt-2">
+                  <input
+                    type="checkbox"
+                    id="uppercase"
+                    className="accent-black"
+                    checked={withUppercaseCharacters}
+                    onChange={(e) => setWithUppercaseCharacters(!withUppercaseCharacters)}
+                  />
+                  <label htmlFor="uppercase" className="font-semibold text-sm">
+                    Use uppercase characters
+                  </label>
+                </div>
+                <div className="flex flex-row gap-2 mt-2">
+                  <input
+                    type="checkbox"
+                    id="lowercase"
+                    className="accent-black"
+                    checked={withLowercaseCharacters}
+                    onChange={(e) => setWithLowercaseCharacters(!withLowercaseCharacters)}
+                  />
+                  <label htmlFor="lowercase" className="font-semibold text-sm">
+                    Use lowercase characters
+                  </label>
+                </div>
+              </>
+        }
 
-      {
-        withCustomCharacterSet
-          ? null
-          : <>
-              <div className="flex flex-row gap-2 mt-2">
-                <input
-                  type="checkbox"
-                  id="special-characters"
-                  className="accent-black"
-                  checked={withSpecialCharacters}
-                  onChange={(e) => setWithSpecialCharacters(!withSpecialCharacters)}
-                />
-                <label htmlFor="special-characters" className="font-semibold text-sm">
-                  Use special characters
-                </label>
-              </div>
-              <span className="text-[#a1a1a1] text-sm ml-[calc(1.25rem+2px)]">
-                { specialCharacters }
-              </span>
-              <div className="flex flex-row gap-2 mt-2">
-                <input
-                  type="checkbox"
-                  id="digits"
-                  className="accent-black"
-                  checked={withDigits}
-                  onChange={(e) => setWithDigiits(!withDigits)}
-                />
-                <label htmlFor="digits" className="font-semibold text-sm">
-                  Use digits
-                </label>
-              </div>
-              <div className="flex flex-row gap-2 mt-2">
-                <input
-                  type="checkbox"
-                  id="uppercase"
-                  className="accent-black"
-                  checked={withUppercaseCharacters}
-                  onChange={(e) => setWithUppercaseCharacters(!withUppercaseCharacters)}
-                />
-                <label htmlFor="uppercase" className="font-semibold text-sm">
-                  Use uppercase characters
-                </label>
-              </div>
-              <div className="flex flex-row gap-2 mt-2">
-                <input
-                  type="checkbox"
-                  id="lowercase"
-                  className="accent-black"
-                  checked={withLowercaseCharacters}
-                  onChange={(e) => setWithLowercaseCharacters(!withLowercaseCharacters)}
-                />
-                <label htmlFor="lowercase" className="font-semibold text-sm">
-                  Use lowercase characters
-                </label>
-              </div>
-            </>
-      }
+        <div className="flex flex-row gap-2 mt-2">
+          <input
+            type="checkbox"
+            id="custom"
+            className="accent-black"
+            checked={withCustomCharacterSet}
+            onChange={(e) => setWithCustomCharacterSet(!withCustomCharacterSet)}
+          />
+          <label htmlFor="custom" className="font-semibold text-sm">
+            Use custom character set
+          </label>
+        </div>
 
-      <div className="flex flex-row gap-2 mt-2">
-        <input
-          type="checkbox"
-          id="custom"
-          className="accent-black"
-          checked={withCustomCharacterSet}
-          onChange={(e) => setWithCustomCharacterSet(!withCustomCharacterSet)}
-        />
-        <label htmlFor="custom" className="font-semibold text-sm">
-          Use custom character set
-        </label>
-      </div>
+        {
+          withCustomCharacterSet
+            ? <input
+                type="text"
+                placeholder="Enter characters.."
+                value={customCharacterSet}
+                className='outline-none mt-2 border border-[#e9e4e5] px-2 rounded-md h-8'
+                onChange={(e) => setCustomCharacterSet(e.target.value)}
+              />
+            : null
+        }
+        
+        <p className="justify-center my-auto mx-auto text-4xl selection:bg-black/20">
+          { password }
+        </p>
 
-      {
-        withCustomCharacterSet
-          ? <input
-              type="text"
-              placeholder="Enter characters.."
-              value={customCharacterSet}
-              className='outline-none mt-2 border border-[#e9e4e5] px-2 rounded-md h-8'
-              onChange={(e) => setCustomCharacterSet(e.target.value)}
-            />
-          : null
-      }
-      
-      <p className="justify-center my-auto mx-auto text-4xl selection:bg-black/20">
-        { password }
-      </p>
-
-      <DialogFooter>
-        <DialogClose>
-          <Button variant="outline">
-            Cancel
+        <DialogFooter>
+          <DialogClose>
+            <Button variant="outline">
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button variant="primary" onClick={generatePassword}>
+            <IconSparkles /> Generate & Copy
           </Button>
-        </DialogClose>
-        <Button variant="primary" onClick={generatePassword}>
-          <IconSparkles /> Generate & Copy
-        </Button>
-      </DialogFooter>
-    </Dialog>
+        </DialogFooter>
+      </Dialog>
+
+      <Dialog ref={messageDialogRef} className='w-xl'>
+        <DialogHeader>An error occured during request</DialogHeader>
+        <DialogDescription>Please try again.</DialogDescription>
+        <DialogFooter>
+          <DialogClose>
+            <Button variant='primary'>Close</Button>
+          </DialogClose>
+        </DialogFooter>
+      </Dialog>
+    </>
   )
 }
 
